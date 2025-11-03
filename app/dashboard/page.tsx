@@ -1,6 +1,7 @@
 import React from 'react';
 import { cookies } from 'next/headers';
 import { createSupabaseServerClient } from '../../src/lib/supabase/server';
+import TransactionsList from '../../src/components/TransactionsList';
 
 export default async function DashboardPage() {
   const cookieStore = cookies();
@@ -51,6 +52,9 @@ export default async function DashboardPage() {
       ) : (
         <p>No hay cuentas registradas.</p>
       )}
+      <div style={{ marginTop: 32 }}>
+        <TransactionsList />
+      </div>
     </div>
   );
 }
