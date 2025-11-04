@@ -22,9 +22,9 @@ export default function AnalyticsPro({
   transactions: Tx[];
   accounts: Account[];
 }) {
-  // ===============================
+  // ======================
   // ✅ 1. Filtros
-  // ===============================
+  // ======================
   const [selectedAccount, setSelectedAccount] = useState<string>("all");
   const [monthsRange, setMonthsRange] = useState<number>(6);
 
@@ -35,21 +35,19 @@ export default function AnalyticsPro({
     return transactions.filter((t) => {
       const d = new Date(t.transaction_date);
       const matchAcc = selectedAccount === "all" || t.account_id === selectedAccount;
-      const matchDate = d >= limit;
-      return matchAcc && matchDate;
+      return matchAcc && d >= limit;
     });
   }, [transactions, selectedAccount, monthsRange]);
 
-  // ===============================
+  // ======================
   // ✅ 2. Agrupar por mes
-  // ===============================
+  // ======================
   const monthly = useMemo(() => {
     const map = new Map<string, number>();
 
     filteredTx.forEach((t) => {
       const d = new Date(t.transaction_date);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-
       map.set(key, (map.get(key) ?? 0) + t.amount);
     });
 
@@ -58,21 +56,22 @@ export default function AnalyticsPro({
 
   const maxValue = Math.max(...monthly.map((m) => Math.abs(m[1]) || 1));
 
-  // ===============================
-  // ✅ 3. Categorías heurísticas
-  // ===============================
+  // ======================
+  // ✅ 3. Categorías
+  // ======================
   const categories = useMemo(() => {
     const groups: Record<string, number> = {};
 
-    const classify = (desc: string | null) => {
-      if (!desc) return "Otros";
-      const d = desc.toLowerCase();
+    const classify = (d: string | null) => {
+      if (!d) return "Otros";
+      const s = d.toLowerCase();
 
-      if (d.includes("super") || d.includes("comida") || d.includes("pan")) return "Supermercado";
-      if (d.includes("gasol") || d.includes("transporte")) return "Transporte";
-      if (d.includes("suscrip") || d.includes("internet") || d.includes("app")) return "Servicios";
-      if (d.includes("rest") || d.includes("cafe") || d.includes("cena")) return "Restauración";
-      if (d.includes("ropa")) return "Ropa";
+      if (s.includes("super") || s.includes("comida")) return "Supermercado";
+      if (s.includes("gas")) return "Transporte";
+      if (s.includes("suscrip") || s.includes("internet")) return "Servicios";
+      if (s.includes("rest") || s.includes("cafe")) return "Restauración";
+      if (s.includes("ropa")) return "Ropa";
+
       return "Otros";
     };
 
@@ -86,16 +85,15 @@ export default function AnalyticsPro({
     return Object.entries(groups).sort((a, b) => b[1] - a[1]);
   }, [filteredTx]);
 
-  const palette = ["#007bff", "#ff6b6b", "#ffa502", "#2ed573", "#1e90ff", "#a29bfe"];
+  const palette = ["#00C4FF", "#FF7676", "#FFB84C", "#2ED573", "#A29BFE"];
 
-  // ===============================
-  // ✅ 4. Predicción de flujo (regresión simple)
-  // ===============================
+  // ======================
+  // ✅ 4. Predicción
+  // ======================
   const prediction = useMemo(() => {
     if (monthly.length < 2) return { future: 0, trend: "neutral" };
 
     const values = monthly.map((m) => m[1]);
-
     const diffs = values.slice(1).map((v, i) => v - values[i]);
     const avgTrend = diffs.reduce((a, b) => a + b, 0) / diffs.length;
 
@@ -108,23 +106,48 @@ export default function AnalyticsPro({
     return { future, trend };
   }, [monthly]);
 
-  return (
-    <div style={{ marginTop: 32, padding: 16 }}>
-      <h2>📊 Analytics PRO</h2>
+  // =======================================
+  // ✅ UI — Estilo BBVA / Revolut
+  // =======================================
 
-      {/* ============================================
-          ✅ Filtros
-      ============================================ */}
-      <div style={{ display: "flex", gap: 16, marginTop: 16, marginBottom: 20 }}>
+  return (
+    <section
+      style={{
+        marginTop: 40,
+        padding: 24,
+        borderRadius: 16,
+        background: "rgba(255,255,255,0.06)",
+        border: "1px solid rgba(255,255,255,0.14)",
+        backdropFilter: "blur(10px)",
+        color: "white",
+      }}
+    >
+      <h2 style={{ fontSize: 22, marginBottom: 18 }}>📊 Analytics Pro</h2>
+
+      {/* ✅ Filtros */}
+      <div
+        style={{
+          display: "flex",
+          gap: 16,
+          marginBottom: 24,
+        }}
+      >
         <select
           value={selectedAccount}
           onChange={(e) => setSelectedAccount(e.target.value)}
-          style={{ padding: 8, borderRadius: 8 }}
+          style={{
+            flex: 1,
+            padding: "10px 12px",
+            borderRadius: 10,
+            background: "rgba(255,255,255,0.12)",
+            color: "white",
+            border: "1px solid rgba(255,255,255,0.2)",
+          }}
         >
           <option value="all">Todas las cuentas</option>
-          {accounts.map((a) => (
-            <option key={a.id} value={a.id}>
-              {a.bank_name ?? "Cuenta"}
+          {accounts.map((acc) => (
+            <option key={acc.id} value={acc.id}>
+              {acc.bank_name}
             </option>
           ))}
         </select>
@@ -132,58 +155,56 @@ export default function AnalyticsPro({
         <select
           value={monthsRange}
           onChange={(e) => setMonthsRange(Number(e.target.value))}
-          style={{ padding: 8, borderRadius: 8 }}
+          style={{
+            flex: 1,
+            padding: "10px 12px",
+            borderRadius: 10,
+            background: "rgba(255,255,255,0.12)",
+            color: "white",
+            border: "1px solid rgba(255,255,255,0.2)",
+          }}
         >
-          <option value={3}>Últimos 3 meses</option>
-          <option value={6}>Últimos 6 meses</option>
-          <option value={12}>Últimos 12 meses</option>
+          <option value={3}>3 meses</option>
+          <option value={6}>6 meses</option>
+          <option value={12}>12 meses</option>
         </select>
       </div>
 
-      {/* ============================================
-          ✅ GRÁFICO EVOLUTIVO (BARRAS + LÍNEA)
-      ============================================ */}
+      {/* ✅ GRÁFICO EVOLUTIVO */}
       <div
         style={{
           padding: 20,
-          border: "1px solid #e5e7eb",
-          background: "white",
-          borderRadius: 12,
+          background: "rgba(255,255,255,0.08)",
+          borderRadius: 14,
+          border: "1px solid rgba(255,255,255,0.12)",
           marginBottom: 32,
         }}
       >
-        <h3 style={{ marginBottom: 12 }}>Evolución del flujo mensual</h3>
+        <h3 style={{ marginBottom: 12, fontWeight: 500 }}>Evolución mensual</h3>
 
-        <div style={{ display: "flex", gap: 18, alignItems: "flex-end", height: 160 }}>
+        <div
+          style={{
+            display: "flex",
+            gap: 18,
+            alignItems: "flex-end",
+            height: 160,
+          }}
+        >
           {monthly.map(([month, value], i) => {
-            const barHeight = (Math.abs(value) / maxValue) * 120;
+            const h = (Math.abs(value) / maxValue) * 100;
 
             return (
               <div key={i} style={{ textAlign: "center" }}>
-                {/* Línea del valor */}
                 <div
                   style={{
-                    height: 4,
-                    width: "100%",
-                    background: "#6366f1",
-                    marginBottom: 6,
-                    opacity: 0.8,
-                    position: "relative",
-                    top: -barHeight / 2,
-                  }}
-                />
-
-                {/* Barra */}
-                <div
-                  style={{
-                    width: 12,
-                    height: barHeight,
-                    background: value >= 0 ? "#2ed573" : "#ff4757",
-                    borderRadius: 4,
+                    width: 14,
+                    height: h,
+                    borderRadius: 6,
+                    background: value >= 0 ? "#2ED573" : "#FF7676",
                     margin: "0 auto 6px",
+                    boxShadow: "0 3px 8px rgba(0,0,0,0.25)",
                   }}
                 />
-
                 <div style={{ fontSize: 11, opacity: 0.7 }}>
                   {month.slice(5)}
                 </div>
@@ -193,19 +214,17 @@ export default function AnalyticsPro({
         </div>
       </div>
 
-      {/* ============================================
-          ✅ PIE CHART CATEGORÍAS
-      ============================================ */}
+      {/* ✅ PIE CHART */}
       <div
         style={{
           padding: 20,
-          border: "1px solid #e5e7eb",
-          background: "white",
-          borderRadius: 12,
+          background: "rgba(255,255,255,0.08)",
+          borderRadius: 14,
+          border: "1px solid rgba(255,255,255,0.12)",
           marginBottom: 32,
         }}
       >
-        <h3 style={{ marginBottom: 12 }}>Distribución por categoría</h3>
+        <h3 style={{ marginBottom: 16, fontWeight: 500 }}>Gasto por categoría</h3>
 
         <div style={{ display: "flex", gap: 20 }}>
           <div
@@ -223,21 +242,25 @@ export default function AnalyticsPro({
                     }deg`
                 )
                 .join(",")})`,
+              boxShadow: "0 4px 12px rgba(0,0,0,0.25)",
             }}
           />
 
           <div>
             {categories.map(([cat, value], i) => (
-              <div key={i} style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+              <div
+                key={i}
+                style={{ display: "flex", gap: 8, marginBottom: 8 }}
+              >
                 <div
                   style={{
                     width: 12,
                     height: 12,
-                    background: palette[i % palette.length],
                     borderRadius: 3,
+                    background: palette[i % palette.length],
                   }}
                 />
-                <span>
+                <span style={{ fontSize: 14 }}>
                   <strong>{cat}</strong>: {value.toFixed(2)}€
                 </span>
               </div>
@@ -246,28 +269,32 @@ export default function AnalyticsPro({
         </div>
       </div>
 
-      {/* ============================================
-          ✅ PREDICCIÓN (IA SIMPLE)
-      ============================================ */}
+      {/* ✅ PREDICCIÓN */}
       <div
         style={{
           padding: 20,
-          border: "1px solid #e5e7eb",
-          background: "white",
-          borderRadius: 12,
+          background: "rgba(255,255,255,0.08)",
+          borderRadius: 14,
+          border: "1px solid rgba(255,255,255,0.12)",
         }}
       >
-        <h3 style={{ marginBottom: 12 }}>Predicción del próximo mes </h3>
+        <h3 style={{ marginBottom: 14 }}>Predicción (IA simple)</h3>
 
-        <p style={{ fontSize: 15 }}>
-          🔮 El flujo estimado para el próximo mes es:{" "}
+        <p style={{ fontSize: 16 }}>
+          🔮 Estimación del próximo mes:{" "}
           <strong>{prediction.future.toFixed(2)}€</strong>
         </p>
 
-        {prediction.trend === "up" && <p>✅ Tendencia positiva en tu liquidez.</p>}
-        {prediction.trend === "down" && <p>⚠️ Podrías experimentar más gastos.</p>}
-        {prediction.trend === "neutral" && <p>ℹ️ Tu tendencia financiera se mantiene estable.</p>}
+        {prediction.trend === "up" && (
+          <p>✅ Tendencia positiva en tu saldo.</p>
+        )}
+        {prediction.trend === "down" && (
+          <p>⚠️ Podrías gastar más de lo normal.</p>
+        )}
+        {prediction.trend === "neutral" && (
+          <p>ℹ️ Estabilidad financiera.</p>
+        )}
       </div>
-    </div>
+    </section>
   );
 }

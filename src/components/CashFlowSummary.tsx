@@ -11,8 +11,8 @@ type Tx = {
 
 type Props = {
   transactions: Tx[];
-  bankAccounts: (BankAccount & { computed_balance: number })[]; // ✅ Importante
-  consolidatedBalance: number; // ✅ Lo recibimos del Dashboard
+  bankAccounts: (BankAccount & { computed_balance: number })[];
+  consolidatedBalance: number;
 };
 
 function formatCurrency(value: number) {
@@ -31,27 +31,24 @@ export default function CashFlowSummary({
   const now = new Date();
   const last30 = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-  // ✅ AGREGACIONES
   const { income30, expenses30, net30, monthlyChart, insight } = useMemo(() => {
     let income = 0;
     let expenses = 0;
-
     const chart: { date: string; amount: number }[] = [];
 
     transactions.forEach((tx) => {
       if (!tx.transaction_date) return;
-
       const d = new Date(tx.transaction_date);
       if (isNaN(d.getTime())) return;
 
-      const is30days = d >= last30 && d <= now;
+      const inside30 = d >= last30 && d <= now;
 
-      if (is30days) {
+      if (inside30) {
         if (tx.amount > 0) income += tx.amount;
         else expenses += Math.abs(tx.amount);
 
         chart.push({
-          date: d.toISOString().slice(5, 10), // "MM-DD"
+          date: d.toISOString().slice(5, 10),
           amount: tx.amount,
         });
       }
@@ -59,12 +56,11 @@ export default function CashFlowSummary({
 
     const net = income - expenses;
 
-    // ✅ Insight inteligente estilo Revolut/N26
     let insightMsg = "";
-    if (net > 0) insightMsg = "Buen mes. Estás generando ahorro neto 👍";
+    if (net > 0) insightMsg = "Buen mes: generaste ahorro neto.";
     else if (expenses > income * 1.2)
-      insightMsg = "Atención: has gastado bastante más de lo que ingresaste.";
-    else insightMsg = "Tu flujo es negativo, pero dentro de un rango normal.";
+      insightMsg = "Atención: tus gastos superan tus ingresos.";
+    else insightMsg = "Flujo negativo, pero dentro de lo normal.";
 
     return {
       income30: income,
@@ -78,87 +74,97 @@ export default function CashFlowSummary({
   const maxAbs = Math.max(...monthlyChart.map((c) => Math.abs(c.amount)), 1);
 
   return (
-    <div
+    <section
       style={{
-        display: "grid",
-        gridTemplateColumns: "1fr 1fr",
-        gap: 16,
-        marginTop: 16,
+        padding: 20,
+        borderRadius: 16,
+        background: "rgba(255,255,255,0.06)",
+        border: "1px solid rgba(255,255,255,0.15)",
+        backdropFilter: "blur(10px)",
+        marginBottom: 24,
+        color: "white",
       }}
     >
-      {/* --- TOTAL BALANCE --- */}
-      <Card title="Saldo consolidado" value={formatCurrency(consolidatedBalance)} />
+      <h2 style={{ fontSize: 22, marginBottom: 16 }}>🔎 Resumen financiero</h2>
 
-      {/* --- NET 30 DAYS --- */}
-      <Card title="Flujo neto (30 días)" value={formatCurrency(net30)} />
-
-      {/* --- INGRESOS --- */}
-      <Card title="Ingresos (30 días)" value={formatCurrency(income30)} color="#0f9d58" />
-
-      {/* --- GASTOS --- */}
-      <Card title="Gastos (30 días)" value={formatCurrency(expenses30)} color="#d93025" />
-
-      {/* --- INSIGHT --- */}
+      {/* GRID DE TARJETAS */}
       <div
         style={{
-          gridColumn: "1 / span 2",
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: 16,
+        }}
+      >
+        <Card title="Saldo consolidado" value={formatCurrency(consolidatedBalance)} />
+        <Card title="Flujo neto (30 días)" value={formatCurrency(net30)} />
+
+        <Card title="Ingresos (30 días)" value={formatCurrency(income30)} color="#00d97e" />
+        <Card title="Gastos (30 días)" value={formatCurrency(expenses30)} color="#ff5b5b" />
+      </div>
+
+      {/* INSIGHT */}
+      <div
+        style={{
+          marginTop: 20,
           padding: 16,
           borderRadius: 12,
-          background: "#f3f4f6",
+          background: "rgba(255,255,255,0.08)",
+          border: "1px solid rgba(255,255,255,0.12)",
           fontSize: 15,
         }}
       >
         💡 {insight}
       </div>
 
-      {/* --- MINI CHART --- */}
+      {/* MINI SPARKLINE */}
       <div
         style={{
-          gridColumn: "1 / span 2",
+          marginTop: 20,
           padding: 16,
           borderRadius: 12,
-          background: "#ffffff",
-          border: "1px solid #e5e7eb",
+          background: "rgba(255,255,255,0.08)",
+          border: "1px solid rgba(255,255,255,0.12)",
         }}
       >
-        <div style={{ marginBottom: 8, fontSize: 14, opacity: 0.7 }}>
-          Actividad últimos 30 días
-        </div>
+        <div style={{ opacity: 0.7, marginBottom: 10 }}>Actividad últimos 30 días</div>
 
         <div
           style={{
             display: "flex",
             alignItems: "flex-end",
-            gap: 4,
+            gap: 6,
             height: 100,
           }}
         >
           {monthlyChart.map((entry, i) => {
-            const h = (Math.abs(entry.amount) / maxAbs) * 100;
+            const height = (Math.abs(entry.amount) / maxAbs) * 100;
+            const color = entry.amount > 0 ? "#00d97e" : "#ff5b5b";
 
             return (
               <div
                 key={i}
-                title={`${entry.date}: ${entry.amount}€`}
                 style={{
-                  width: 6,
-                  height: h,
-                  background: entry.amount > 0 ? "#0f9d58" : "#d93025",
-                  borderRadius: 4,
+                  width: 8,
+                  height,
+                  background: color,
+                  borderRadius: 6,
+                  boxShadow: "0 3px 8px rgba(0,0,0,0.25)",
+                  transition: "height 0.3s ease",
                 }}
+                title={`${entry.date}: ${entry.amount}€`}
               ></div>
             );
           })}
         </div>
       </div>
-    </div>
+    </section>
   );
 }
 
 function Card({
   title,
   value,
-  color = "#111",
+  color = "white",
 }: {
   title: string;
   value: string;
@@ -168,15 +174,23 @@ function Card({
     <div
       style={{
         padding: 16,
-        borderRadius: 12,
-        border: "1px solid #e5e7eb",
-        background: "#ffffff",
+        borderRadius: 14,
+        background: "rgba(255,255,255,0.08)",
+        border: "1px solid rgba(255,255,255,0.14)",
+        backdropFilter: "blur(8px)",
       }}
     >
-      <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>
-        {title}
+      <div style={{ fontSize: 13, opacity: 0.7 }}>{title}</div>
+      <div
+        style={{
+          marginTop: 4,
+          fontSize: 24,
+          fontWeight: 600,
+          color,
+        }}
+      >
+        {value}
       </div>
-      <div style={{ fontSize: 24, fontWeight: 600, color }}>{value}</div>
     </div>
   );
 }
