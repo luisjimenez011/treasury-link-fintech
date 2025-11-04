@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseServerClient } from './src/lib/supabase/server';
+import { createSupabaseMiddlewareClient } from './src/lib/supabase/server';
 
 export async function middleware(request: NextRequest) {
   // Asegura que las cabeceras de request se propaguen a la respuesta
   const response = NextResponse.next({ request: { headers: request.headers } });
 
-  // Crea el cliente SSR con el cookie store de la respuesta
-  const supabase = createSupabaseServerClient(response.cookies);
+  // Crea el cliente de middleware: lee de request.cookies y escribe en response.cookies
+  const supabase = createSupabaseMiddlewareClient(request.cookies, response.cookies);
 
   // Dispara la lectura/refresh de sesión; sincroniza cookies HTTP si hubo refresh
   await supabase.auth.getSession();

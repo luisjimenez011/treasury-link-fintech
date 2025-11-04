@@ -1,48 +1,74 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { cookies as nextCookies } from "next/headers";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Faltan NEXT_PUBLIC_SUPABASE_URL o NEXT_PUBLIC_SUPABASE_ANON_KEY');
+  throw new Error("Faltan NEXT_PUBLIC_SUPABASE_URL o NEXT_PUBLIC_SUPABASE_ANON_KEY");
 }
 
-// Este cliente SSR se usa en Server Components y en el Middleware.
-// Lee/escribe cookies HTTP para mantener la sesión de Supabase (RLS en PostgreSQL aísla datos por usuario).
-// Acepta un cookieStore proveniente del encabezado de la solicitud (p.ej. cookies() en RSC o request/response en Middleware).
+// ✅ Versión CORRECTA para Next.js 16 (cookies() es ASÍNCRONO)
 export function createSupabaseServerClient(cookieStore: any): SupabaseClient {
-  const client = createServerClient(supabaseUrl, supabaseAnonKey, {
+  return createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
-      get(name: string) {
-        const raw = cookieStore?.get?.(name);
-        return typeof raw === 'string' ? raw : raw?.value;
+      async get(name: string) {
+        const store = await cookieStore;
+        const raw = store.get(name);
+        return typeof raw === "string" ? raw : raw?.value;
       },
-      set(name: string, value: string, options: CookieOptions) {
+      async set(name: string, value: string, options: CookieOptions) {
         try {
-          // En Middleware normalmente existe .set; en RSC podría ser read-only
-          if (typeof cookieStore?.set === 'function') {
-            cookieStore.set(name, value, options as any);
+          const store = await cookieStore;
+          if (typeof store.set === "function") {
+            store.set(name, value, options as any);
           }
-        } catch {
-          // no-op en contextos de solo lectura
-        }
+        } catch {}
       },
-      remove(name: string, options: CookieOptions) {
+      async remove(name: string, options: CookieOptions) {
         try {
-          if (typeof cookieStore?.delete === 'function') {
-            cookieStore.delete(name, options as any);
-          } else if (typeof cookieStore?.set === 'function') {
-            cookieStore.set(name, '', { ...(options as any), maxAge: 0 });
+          const store = await cookieStore;
+          if (typeof store.delete === "function") {
+            store.delete(name, options as any);
+          } else if (typeof store.set === "function") {
+            store.set(name, "", { ...(options as any), maxAge: 0 });
           }
-        } catch {
-          // no-op en contextos de solo lectura
-        }
+        } catch {}
       },
     },
   });
-
-  return client;
 }
 
+// ✅ Versión usada SOLO en Middleware (reqCookies + resCookies)
+export function createSupabaseMiddlewareClient(reqCookies: any, resCookies: any) {
+  return createServerClient(supabaseUrl, supabaseAnonKey, {
+    cookies: {
+      get(name: string) {
+        const raw = reqCookies?.get?.(name);
+        return typeof raw === "string" ? raw : raw?.value;
+      },
+      set(name: string, value: string, options: CookieOptions) {
+        try {
+          if (typeof resCookies?.set === "function") {
+            resCookies.set(name, value, options as any);
+          }
+        } catch {}
+      },
+      remove(name: string, options: CookieOptions) {
+        try {
+          if (typeof resCookies?.delete === "function") {
+            resCookies.delete(name, options as any);
+          } else if (typeof resCookies?.set === "function") {
+            resCookies.set(name, "", { ...(options as any), maxAge: 0 });
+          }
+        } catch {}
+      },
+    },
+  });
+}
 
+// ✅ Helper opcional: obtener cookieStore correctamente en RSC/Route Handler
+export function getCookieStore() {
+  return nextCookies();
+}

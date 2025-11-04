@@ -1,82 +1,108 @@
-import React from 'react';
-import { cookies } from 'next/headers';
-import { createSupabaseServerClient } from '../../src/lib/supabase/server';
-import TransactionsList from '../../src/components/TransactionsList';
-import CashFlowSummary from '../../src/components/CashFlowSummary';
+import React from "react";
+import { cookies } from "next/headers";
+import ImportDummyButton from "../../src/components/ImportDummyButton";
+import { createSupabaseServerClient } from "../../src/lib/supabase/server";
+import TransactionsList from "../../src/components/TransactionsList";
+import CashFlowSummary from "../../src/components/CashFlowSummary";
+import AnalyticsPro from "../../src/components/AnalyticsPro";
 
 export default async function DashboardPage() {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const supabase = createSupabaseServerClient(cookieStore);
 
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
 
-  if (!session) {
+  if (!user || userError) {
     return (
-      <div style={{ maxWidth: 720, margin: '48px auto', padding: 24 }}>
+      <div style={{ maxWidth: 720, margin: "48px auto", padding: 24 }}>
         <h1>Dashboard</h1>
-        <p>No has iniciado sesión.</p>
+        <p>No has iniciado sesión. Redirigiendo...</p>
       </div>
     );
   }
 
-  // RLS en PostgreSQL (Supabase) filtra automáticamente por usuario actual utilizando auth.uid().
-  // Esta consulta devolverá únicamente las cuentas bancarias pertenecientes al usuario autenticado.
-  const { data: bankAccounts, error } = await supabase
-    .from('bank_accounts')
-    .select('*')
-    .order('created_at', { ascending: false });
+  // ✅ Cargar CUENTAS
+  const { data: bankAccounts, error: accError } = await supabase
+    .from("bank_accounts")
+    .select("*")
+    .eq("user_id", user.id);
 
-  if (error) {
-    return (
-      <div style={{ maxWidth: 720, margin: '48px auto', padding: 24 }}>
-        <h1>Dashboard</h1>
-        <p>Error cargando cuentas: {error.message}</p>
-      </div>
-    );
+  if (accError) {
+    return <p>Error cargando cuentas: {accError.message}</p>;
   }
 
-  // Obtiene transacciones (sensibles) en el Server Component; RLS aplica por usuario
+  // ✅ Cargar TRANSACCIONES
   const { data: transactions, error: txError } = await supabase
-    .from('transactions')
-    .select('id, user_id, amount, description, account_id, transaction_date')
-    .order('transaction_date', { ascending: false })
-    .limit(200);
+    .from("transactions")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("transaction_date", { ascending: false });
 
   if (txError) {
-    return (
-      <div style={{ maxWidth: 720, margin: '48px auto', padding: 24 }}>
-        <h1>Dashboard</h1>
-        <p>Error cargando transacciones: {txError.message}</p>
-      </div>
-    );
+    return <p>Error cargando transacciones: {txError.message}</p>;
   }
 
+  // ✅ RE-CALCULAR SALDOS por cuenta
+  const accountsWithComputedBalance = (bankAccounts ?? []).map((acc) => {
+    const balance = (transactions ?? [])
+      .filter((t) => t.account_id === acc.id)
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    return {
+      ...acc,
+      computed_balance: balance,
+    };
+  });
+
+  // ✅ Calcular saldo consolidado a partir de computed_balance
+  const consolidatedBalance = accountsWithComputedBalance.reduce(
+    (sum, acc) => sum + acc.computed_balance,
+    0
+  );
+
   return (
-    <div style={{ maxWidth: 720, margin: '48px auto', padding: 24 }}>
-      <h1>Dashboard</h1>
-      <p>Usuario: {session.user.email}</p>
+    <div style={{ maxWidth: 720, margin: "48px auto", padding: 24 }}>
+      <h1>Dashboard de Tesorería</h1>
+      <p>Usuario: {user.email}</p>
+
+      <ImportDummyButton />
+
+      {/* ✅ Resumen de caja con saldos REALES */}
       <div style={{ marginTop: 16, marginBottom: 24 }}>
-        <CashFlowSummary transactions={transactions ?? []} bankAccounts={bankAccounts ?? []} />
+        <CashFlowSummary
+          transactions={transactions ?? []}
+          bankAccounts={accountsWithComputedBalance}
+          consolidatedBalance={consolidatedBalance}
+        />
       </div>
-      <h2 style={{ marginTop: 24 }}>Cuentas bancarias</h2>
-      {bankAccounts && bankAccounts.length > 0 ? (
+
+      <AnalyticsPro
+        transactions={transactions ?? []}
+        accounts={accountsWithComputedBalance}
+      />
+
+      <h2 style={{ marginTop: 24 }}>Cuentas Bancarias</h2>
+
+      {accountsWithComputedBalance.length ? (
         <ul>
-          {bankAccounts.map((acc: any) => (
+          {accountsWithComputedBalance.map((acc) => (
             <li key={acc.id}>
-              <strong>{acc.name ?? 'Cuenta'}</strong> — {acc.iban ?? acc.number ?? 'N/A'}
+              <strong>{acc.bank_name}</strong> — Saldo:{" "}
+              {acc.computed_balance.toFixed(2)} €
             </li>
           ))}
         </ul>
       ) : (
         <p>No hay cuentas registradas.</p>
       )}
+
       <div style={{ marginTop: 32 }}>
-        <TransactionsList />
+        <TransactionsList transactions={transactions ?? []} />
       </div>
     </div>
   );
 }
-
 
