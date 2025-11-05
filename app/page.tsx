@@ -1,98 +1,45 @@
-import React from "react";
 import Link from "next/link";
 
 export default function HomePage() {
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        background:
-          "linear-gradient(135deg, #0A1A2F 0%, #0F2C49 35%, #0A1A2F 100%)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 24,
-        color: "white",
-        fontFamily: "system-ui, sans-serif",
-      }}
-    >
-      <div
-        style={{
-          width: "100%",
-          maxWidth: 420,
-          textAlign: "center",
-        }}
-      >
-        {/* LOGO */}
-        <div
-          style={{
-            fontSize: 32,
-            fontWeight: 700,
-            marginBottom: 8,
-            letterSpacing: -0.5,
-          }}
-        >
-          Treasury<span style={{ color: "#00E0A1" }}>Link</span>
-        </div>
+    <main className="min-h-screen flex items-center justify-center px-6 text-white bg-[linear-gradient(135deg,#0A1A2F_0%,#0F2C49_35%,#0A1A2F_100%)]">
+      <div className="w-full max-w-sm text-center">
 
-        <p
-          style={{
-            opacity: 0.8,
-            fontSize: 16,
-            marginBottom: 40,
-            lineHeight: "24px",
-          }}
-        >
-          La plataforma moderna que unifica todas tus cuentas bancarias,
-          transacciones y flujo de tesorería en un solo lugar.
+        {/* ✅ LOGO */}
+        <h1 className="text-4xl font-semibold tracking-tight mb-3 font-[SF_Pro_Display]">
+          Treasury<span className="text-[#00E0A1]">Link</span>
+        </h1>
+
+        {/* ✅ SUBTEXTO */}
+        <p className="text-white/80 text-base leading-relaxed mb-10">
+          La plataforma moderna que unifica tus cuentas bancarias, movimientos y flujo de tesorería.
         </p>
 
-        {/* BOTONES */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 12,
-          }}
-        >
+        {/* ✅ BOTONES PRO */}
+        <div className="flex flex-col gap-3">
+
+          {/* BOTÓN LOGIN */}
           <Link
             href="/login"
-            style={{
-              padding: "14px 18px",
-              background: "#00E0A1",
-              color: "#0A1A2F",
-              borderRadius: 12,
-              fontWeight: 600,
-              textAlign: "center",
-              textDecoration: "none",
-              fontSize: 16,
-            }}
+            className="w-full py-3 rounded-xl bg-[#00E0A1] text-[#0A1A2F] font-semibold text-base shadow-[0_0_14px_rgba(0,224,161,0.35)] active:scale-[0.98] transition-all"
           >
             Iniciar sesión
           </Link>
 
+          {/* BOTÓN DASHBOARD */}
           <Link
             href="/dashboard"
-            style={{
-              padding: "14px 18px",
-              background: "rgba(255,255,255,0.12)",
-              backdropFilter: "blur(6px)",
-              borderRadius: 12,
-              fontWeight: 500,
-              textAlign: "center",
-              textDecoration: "none",
-              color: "white",
-              fontSize: 16,
-            }}
+            className="w-full py-3 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 text-white font-medium text-base active:scale-[0.98] transition-all"
           >
             Ir al Dashboard
           </Link>
         </div>
 
-        {/* FOOTER */}
-        <div style={{ marginTop: 60, opacity: 0.4, fontSize: 13 }}>
+        {/* ✅ FOOTER */}
+        <p className="mt-14 text-white/40 text-sm">
           © {new Date().getFullYear()} TreasuryLink — Gestión financiera inteligente
-        </div>
+        </p>
+
       </div>
     </main>
   );

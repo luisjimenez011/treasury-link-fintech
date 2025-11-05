@@ -1,0 +1,13 @@
+@import "./fonts.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  font-family: "SF Pro Text", system-ui, sans-serif;
+}
+
+body {
+  @apply bg-[#0A1A2F] text-white min-h-screen;
+}

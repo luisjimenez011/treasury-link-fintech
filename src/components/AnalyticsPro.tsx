@@ -30,7 +30,8 @@ export default function AnalyticsPro({
 
   const filteredTx = useMemo(() => {
     const now = new Date();
-    const limit = new Date(now.setMonth(now.getMonth() - monthsRange));
+    const limit = new Date();
+    limit.setMonth(now.getMonth() - monthsRange);
 
     return transactions.filter((t) => {
       const d = new Date(t.transaction_date);
@@ -54,7 +55,7 @@ export default function AnalyticsPro({
     return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]));
   }, [filteredTx]);
 
-  const maxValue = Math.max(...monthly.map((m) => Math.abs(m[1]) || 1));
+  const maxValue = Math.max(...monthly.map((m) => Math.abs(m[1]) || 1), 1);
 
   // ======================
   // ✅ 3. Categorías
@@ -67,10 +68,9 @@ export default function AnalyticsPro({
       const s = d.toLowerCase();
 
       if (s.includes("super") || s.includes("comida")) return "Supermercado";
-      if (s.includes("gas")) return "Transporte";
+      if (s.includes("gas") || s.includes("uber")) return "Transporte";
       if (s.includes("suscrip") || s.includes("internet")) return "Servicios";
       if (s.includes("rest") || s.includes("cafe")) return "Restauración";
-      if (s.includes("ropa")) return "Ropa";
 
       return "Otros";
     };
@@ -88,7 +88,7 @@ export default function AnalyticsPro({
   const palette = ["#00C4FF", "#FF7676", "#FFB84C", "#2ED573", "#A29BFE"];
 
   // ======================
-  // ✅ 4. Predicción
+  // ✅ 4. Predicción IA simple
   // ======================
   const prediction = useMemo(() => {
     if (monthly.length < 2) return { future: 0, trend: "neutral" };
@@ -107,42 +107,22 @@ export default function AnalyticsPro({
   }, [monthly]);
 
   // =======================================
-  // ✅ UI — Estilo BBVA / Revolut
+  // ✅ UI — Estilo BBVA / Revolut PRO
   // =======================================
 
   return (
-    <section
-      style={{
-        marginTop: 40,
-        padding: 24,
-        borderRadius: 16,
-        background: "rgba(255,255,255,0.06)",
-        border: "1px solid rgba(255,255,255,0.14)",
-        backdropFilter: "blur(10px)",
-        color: "white",
-      }}
-    >
-      <h2 style={{ fontSize: 22, marginBottom: 18 }}>📊 Analytics Pro</h2>
+    <section className="mt-6 p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xl text-white">
+      <h2 className="text-2xl font-semibold mb-6">Analytics Pro</h2>
 
       {/* ✅ Filtros */}
-      <div
-        style={{
-          display: "flex",
-          gap: 16,
-          marginBottom: 24,
-        }}
-      >
+      <div className="flex gap-4 mb-6">
         <select
           value={selectedAccount}
           onChange={(e) => setSelectedAccount(e.target.value)}
-          style={{
-            flex: 1,
-            padding: "10px 12px",
-            borderRadius: 10,
-            background: "rgba(255,255,255,0.12)",
-            color: "white",
-            border: "1px solid rgba(255,255,255,0.2)",
-          }}
+          className="
+            flex-1 p-3 rounded-xl bg-white/10 text-white border border-white/10 
+            focus:outline-none focus:ring-2 focus:ring-[#00E0A1]
+          "
         >
           <option value="all">Todas las cuentas</option>
           {accounts.map((acc) => (
@@ -155,14 +135,10 @@ export default function AnalyticsPro({
         <select
           value={monthsRange}
           onChange={(e) => setMonthsRange(Number(e.target.value))}
-          style={{
-            flex: 1,
-            padding: "10px 12px",
-            borderRadius: 10,
-            background: "rgba(255,255,255,0.12)",
-            color: "white",
-            border: "1px solid rgba(255,255,255,0.2)",
-          }}
+          className="
+            flex-1 p-3 rounded-xl bg-white/10 text-white border border-white/10 
+            focus:outline-none focus:ring-2 focus:ring-[#00E0A1]
+          "
         >
           <option value={3}>3 meses</option>
           <option value={6}>6 meses</option>
@@ -171,128 +147,100 @@ export default function AnalyticsPro({
       </div>
 
       {/* ✅ GRÁFICO EVOLUTIVO */}
-      <div
-        style={{
-          padding: 20,
-          background: "rgba(255,255,255,0.08)",
-          borderRadius: 14,
-          border: "1px solid rgba(255,255,255,0.12)",
-          marginBottom: 32,
-        }}
-      >
-        <h3 style={{ marginBottom: 12, fontWeight: 500 }}>Evolución mensual</h3>
+      <div className="p-5 rounded-xl bg-white/10 border border-white/10 mb-8">
+        <h3 className="font-medium mb-4">Evolución mensual</h3>
 
-        <div
-          style={{
-            display: "flex",
-            gap: 18,
-            alignItems: "flex-end",
-            height: 160,
-          }}
-        >
-          {monthly.map(([month, value], i) => {
-            const h = (Math.abs(value) / maxValue) * 100;
+        {monthly.length === 0 ? (
+          <div className="h-32 flex items-center justify-center opacity-60 text-sm">
+            No hay datos suficientes para mostrar la gráfica.
+          </div>
+        ) : (
+          <div className="flex items-end gap-4 h-40 transition-all">
+            {monthly.map(([month, value], i) => {
+              const h = Math.max((Math.abs(value) / maxValue) * 100, 12); // ✅ MIN HEIGHT
 
-            return (
-              <div key={i} style={{ textAlign: "center" }}>
-                <div
-                  style={{
-                    width: 14,
-                    height: h,
-                    borderRadius: 6,
-                    background: value >= 0 ? "#2ED573" : "#FF7676",
-                    margin: "0 auto 6px",
-                    boxShadow: "0 3px 8px rgba(0,0,0,0.25)",
-                  }}
-                />
-                <div style={{ fontSize: 11, opacity: 0.7 }}>
-                  {month.slice(5)}
+              return (
+                <div key={i} className="text-center">
+                  <div
+                    className="w-[18px] mx-auto rounded-md shadow-lg transition-all duration-300"
+                    style={{
+                      height: `${h}%`,
+                      backgroundColor: value >= 0 ? "#2ED573" : "#FF6B6B",
+                    }}
+                  />
+                  <div className="text-xs opacity-60 mt-2">{month.slice(5)}</div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* ✅ PIE CHART */}
-      <div
-        style={{
-          padding: 20,
-          background: "rgba(255,255,255,0.08)",
-          borderRadius: 14,
-          border: "1px solid rgba(255,255,255,0.12)",
-          marginBottom: 32,
-        }}
-      >
-        <h3 style={{ marginBottom: 16, fontWeight: 500 }}>Gasto por categoría</h3>
+      <div className="p-5 rounded-xl bg-white/10 border border-white/10 mb-8">
+        <h3 className="font-medium mb-4">Gasto por categoría</h3>
 
-        <div style={{ display: "flex", gap: 20 }}>
-          <div
-            style={{
-              width: 150,
-              height: 150,
-              borderRadius: "50%",
-              background: `conic-gradient(${categories
-                .map(
-                  ([cat, value], i) =>
-                    `${palette[i % palette.length]} ${
-                      (value /
-                        categories.reduce((a, b) => a + b[1], 0)) *
-                      360
-                    }deg`
-                )
-                .join(",")})`,
-              boxShadow: "0 4px 12px rgba(0,0,0,0.25)",
-            }}
-          />
-
-          <div>
-            {categories.map(([cat, value], i) => (
-              <div
-                key={i}
-                style={{ display: "flex", gap: 8, marginBottom: 8 }}
-              >
-                <div
-                  style={{
-                    width: 12,
-                    height: 12,
-                    borderRadius: 3,
-                    background: palette[i % palette.length],
-                  }}
-                />
-                <span style={{ fontSize: 14 }}>
-                  <strong>{cat}</strong>: {value.toFixed(2)}€
-                </span>
-              </div>
-            ))}
+        {categories.length === 0 ? (
+          <div className="h-32 flex items-center justify-center opacity-60 text-sm">
+            No hay gastos categorizados todavía.
           </div>
-        </div>
+        ) : (
+          <div className="flex gap-6">
+            {/* ✅ Donut preciso */}
+            <div
+              className="w-[150px] h-[150px] rounded-full shadow-lg"
+              style={{
+                background: (() => {
+                  const total = categories.reduce((a, b) => a + b[1], 0);
+                  let acc = 0;
+
+                  return `conic-gradient(${categories
+                    .map(([cat, value], i) => {
+                      const start = (acc / total) * 360;
+                      acc += value;
+                      const end = (acc / total) * 360;
+                      return `${palette[i % palette.length]} ${start}deg ${end}deg`;
+                    })
+                    .join(",")})`;
+                })(),
+              }}
+            />
+
+            {/* ✅ Leyenda */}
+            <div className="flex flex-col justify-center gap-2">
+              {categories.map(([cat, value], i) => (
+                <div key={i} className="flex items-center gap-2 text-sm">
+                  <div
+                    className="w-3 h-3 rounded"
+                    style={{ background: palette[i % palette.length] }}
+                  />
+                  <span>
+                    <strong>{cat}</strong>: {value.toFixed(2)}€
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ✅ PREDICCIÓN */}
-      <div
-        style={{
-          padding: 20,
-          background: "rgba(255,255,255,0.08)",
-          borderRadius: 14,
-          border: "1px solid rgba(255,255,255,0.12)",
-        }}
-      >
-        <h3 style={{ marginBottom: 14 }}>Predicción (IA simple)</h3>
+      <div className="p-5 rounded-xl bg-white/10 border border-white/10">
+        <h3 className="font-medium mb-3">Predicción (IA simple)</h3>
 
-        <p style={{ fontSize: 16 }}>
+        <p className="text-lg">
           🔮 Estimación del próximo mes:{" "}
           <strong>{prediction.future.toFixed(2)}€</strong>
         </p>
 
         {prediction.trend === "up" && (
-          <p>✅ Tendencia positiva en tu saldo.</p>
+          <p className="text-green-400 mt-2">✅ Tendencia positiva.</p>
         )}
         {prediction.trend === "down" && (
-          <p>⚠️ Podrías gastar más de lo normal.</p>
+          <p className="text-red-400 mt-2">⚠️ Posible aumento de gastos.</p>
         )}
         {prediction.trend === "neutral" && (
-          <p>ℹ️ Estabilidad financiera.</p>
+          <p className="text-blue-300 mt-2">ℹ️ Estabilidad financiera.</p>
         )}
       </div>
     </section>

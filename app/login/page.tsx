@@ -6,7 +6,6 @@ import { createClient } from "../../src/lib/supabase/client";
 
 export default function LoginPage() {
   const supabase = createClient();
-
   const [mode, setMode] = useState<"login" | "signup">("login");
 
   // LOGIN state
@@ -21,25 +20,21 @@ export default function LoginPage() {
   const [loadingSignUp, setLoadingSignUp] = useState(false);
   const [errorSignUp, setErrorSignUp] = useState<string | null>(null);
 
-  // ✅ LOGIN HANDLER
+  // ✅ LOGIN
   async function handleLogin(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setErrorLogin(null);
     setLoadingLogin(true);
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     setLoadingLogin(false);
-
     if (error) return setErrorLogin(error.message);
 
     window.location.href = "/dashboard";
   }
 
-  // ✅ SIGNUP HANDLER
+  // ✅ SIGNUP
   async function handleSignUp(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setErrorSignUp(null);
@@ -51,87 +46,41 @@ export default function LoginPage() {
     });
 
     setLoadingSignUp(false);
-
     if (error) return setErrorSignUp(error.message);
 
     window.location.href = "/dashboard";
   }
 
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        background:
-          "linear-gradient(135deg, #0A1A2F 0%, #0F2C49 40%, #0A1A2F 100%)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 24,
-        color: "white",
-        fontFamily: "system-ui, sans-serif",
-      }}
-    >
-      <div
-        style={{
-          width: "100%",
-          maxWidth: 420,
-          padding: 28,
-          borderRadius: 18,
-          background: "rgba(255,255,255,0.06)",
-          backdropFilter: "blur(14px)",
-          border: "1px solid rgba(255,255,255,0.12)",
-        }}
-      >
+    <main className="min-h-screen flex items-center justify-center px-5 
+      bg-gradient-to-br from-[#0A1A2F] via-[#0F2C49] to-[#0A1A2F] text-white">
+
+      <div className="w-full max-w-sm bg-white/5 backdrop-blur-xl border border-white/10 
+        rounded-2xl p-7 shadow-lg">
+
         {/* LOGO */}
-        <h1
-          style={{
-            textAlign: "center",
-            fontSize: 32,
-            fontWeight: 700,
-            letterSpacing: -1,
-            marginBottom: 16,
-          }}
-        >
-          Treasury<span style={{ color: "#00E0A1" }}>Link</span>
+        <h1 className="text-center text-3xl font-semibold mb-7 tracking-tight font-[SF Pro Display]">
+          Treasury<span className="text-[#00E0A1]">Link</span>
         </h1>
 
-        {/* Tabs LOGIN / SIGNUP */}
-        <div
-          style={{
-            display: "flex",
-            background: "rgba(255,255,255,0.1)",
-            borderRadius: 12,
-            padding: 4,
-            marginBottom: 28,
-          }}
-        >
+        {/* ✅ TABS */}
+        <div className="flex bg-white/10 p-1 rounded-xl mb-8">
           <button
             onClick={() => setMode("login")}
-            style={{
-              flex: 1,
-              padding: "10px 0",
-              borderRadius: 10,
-              border: "none",
-              cursor: "pointer",
-              fontWeight: 600,
-              background: mode === "login" ? "#00E0A1" : "transparent",
-              color: mode === "login" ? "#0A1A2F" : "white",
-            }}
+            className={`
+              flex-1 py-2 rounded-lg font-medium transition
+              ${mode === "login" ? "bg-[#00E0A1] text-[#0A1A2F]" : "text-white/80"}
+            `}
           >
             Iniciar sesión
           </button>
+
           <button
             onClick={() => setMode("signup")}
-            style={{
-              flex: 1,
-              padding: "10px 0",
-              borderRadius: 10,
-              border: "none",
-              cursor: "pointer",
-              fontWeight: 600,
-              background: mode === "signup" ? "#00E0A1" : "transparent",
-              color: mode === "signup" ? "#0A1A2F" : "white",
-            }}
+            className={`
+              flex-1 py-2 rounded-lg font-medium transition
+              ${mode === "signup" ? "bg-[#00E0A1] text-[#0A1A2F]" : "text-white/80"}
+            `}
           >
             Crear cuenta
           </button>
@@ -139,30 +88,29 @@ export default function LoginPage() {
 
         {/* ✅ LOGIN FORM */}
         {mode === "login" && (
-          <form onSubmit={handleLogin}>
+          <form onSubmit={handleLogin} className="space-y-4">
             <Field
               label="Email"
               type="email"
               value={email}
-              placeholder="tu@email.com"
-              onChange={(v) => setEmail(v)}
+              placeholder="ejemplo@email.com"
+              onChange={setEmail}
             />
 
             <Field
               label="Contraseña"
               type="password"
               value={password}
-              onChange={(v) => setPassword(v)}
+              onChange={setPassword}
             />
 
-            {errorLogin && (
-              <p style={{ color: "#ff6b6b", marginTop: 8 }}>{errorLogin}</p>
-            )}
+            {errorLogin && <p className="text-red-400 text-sm">{errorLogin}</p>}
 
             <button
               type="submit"
               disabled={loadingLogin}
-              style={buttonStyle}
+              className="w-full py-3 mt-3 bg-[#00E0A1] text-[#0A1A2F] 
+                font-semibold rounded-xl transition active:scale-[0.97]"
             >
               {loadingLogin ? "Ingresando…" : "Entrar"}
             </button>
@@ -171,30 +119,29 @@ export default function LoginPage() {
 
         {/* ✅ SIGNUP FORM */}
         {mode === "signup" && (
-          <form onSubmit={handleSignUp}>
+          <form onSubmit={handleSignUp} className="space-y-4">
             <Field
               label="Email"
               type="email"
               value={signUpEmail}
               placeholder="tu@email.com"
-              onChange={(v) => setSignUpEmail(v)}
+              onChange={setSignUpEmail}
             />
 
             <Field
               label="Contraseña"
               type="password"
               value={signUpPassword}
-              onChange={(v) => setSignUpPassword(v)}
+              onChange={setSignUpPassword}
             />
 
-            {errorSignUp && (
-              <p style={{ color: "#ff6b6b", marginTop: 8 }}>{errorSignUp}</p>
-            )}
+            {errorSignUp && <p className="text-red-400 text-sm">{errorSignUp}</p>}
 
             <button
               type="submit"
               disabled={loadingSignUp}
-              style={buttonStyle}
+              className="w-full py-3 mt-3 bg-[#00E0A1] text-[#0A1A2F] 
+                font-semibold rounded-xl transition active:scale-[0.97]"
             >
               {loadingSignUp ? "Creando cuenta…" : "Crear cuenta"}
             </button>
@@ -205,7 +152,7 @@ export default function LoginPage() {
   );
 }
 
-/* ✅ INPUT FIELD COMPONENT */
+/* ✅ COMPONENTE PRO DE INPUT */
 function Field({
   label,
   type,
@@ -220,46 +167,19 @@ function Field({
   onChange: (v: string) => void;
 }) {
   return (
-    <div style={{ marginBottom: 18 }}>
-      <label
-        style={{
-          display: "block",
-          marginBottom: 6,
-          fontSize: 14,
-          opacity: 0.7,
-        }}
-      >
-        {label}
-      </label>
+    <div>
+      <label className="text-sm mb-1 block text-white/70">{label}</label>
       <input
         type={type}
         value={value}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
-        style={{
-          width: "100%",
-          padding: "12px 14px",
-          borderRadius: 10,
-          border: "1px solid rgba(255,255,255,0.2)",
-          background: "rgba(255,255,255,0.05)",
-          color: "white",
-          fontSize: 15,
-        }}
+        className="
+          w-full px-4 py-3 rounded-xl bg-white/5 border border-white/20 
+          text-white placeholder-white/40 focus:border-[#00E0A1] 
+          focus:bg-white/10 transition outline-none
+        "
       />
     </div>
   );
 }
-
-/* ✅ BOTÓN ESTILO REVOLUT/N26 */
-const buttonStyle = {
-  width: "100%",
-  padding: "14px 0",
-  marginTop: 8,
-  background: "#00E0A1",
-  color: "#0A1A2F",
-  border: "none",
-  borderRadius: 12,
-  fontSize: 16,
-  fontWeight: 600,
-  cursor: "pointer",
-};

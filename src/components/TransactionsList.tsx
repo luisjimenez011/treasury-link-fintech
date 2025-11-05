@@ -15,7 +15,6 @@ export default function TransactionsList({ transactions }: { transactions: Tx[] 
   const [typeFilter, setTypeFilter] = useState<"all" | "income" | "expense">("all");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
-  // ✅ Lógica: Filtros + Búsqueda + Orden
   const filteredTransactions = useMemo(() => {
     let tx = [...transactions];
 
@@ -38,73 +37,57 @@ export default function TransactionsList({ transactions }: { transactions: Tx[] 
   }, [transactions, search, typeFilter, sortOrder]);
 
   return (
-    <section style={{ marginTop: 30 }}>
-      <h2 style={{ fontSize: 22, marginBottom: 16, color: "white" }}>💳 Movimientos</h2>
+    <section className="mt-10">
+      <h2 className="text-2xl font-semibold text-white mb-4">Movimientos</h2>
 
-      {/* ================================ */}
-      {/* ✅ CONTROLES FILTRO + SEARCH */}
-      {/* ================================ */}
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: 12,
-          marginBottom: 20,
-          background: "rgba(255,255,255,0.05)",
-          padding: 16,
-          borderRadius: 12,
-          border: "1px solid rgba(255,255,255,0.12)",
-          backdropFilter: "blur(10px)",
-        }}
-      >
+      {/* ====================== */}
+      {/* ✅ FILTROS Y BÚSQUEDA */}
+      {/* ====================== */}
+      <div className="flex flex-col gap-4 mb-6 p-5 bg-white/5 border border-white/10 rounded-xl backdrop-blur-xl">
         {/* Buscador */}
         <input
           type="text"
-          placeholder="🔍 Buscar movimiento..."
+          placeholder="Buscar movimiento…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          style={{
-            padding: 12,
-            borderRadius: 10,
-            border: "1px solid rgba(255,255,255,0.15)",
-            background: "rgba(255,255,255,0.08)",
-            color: "white",
-            outline: "none",
-          }}
+          className="
+            w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white 
+            focus:ring-2 focus:ring-emerald-400/40 outline-none placeholder-white/40
+          "
         />
 
-        {/* Filtros */}
-        <div style={{ display: "flex", gap: 10 }}>
-          <select
+        {/* Selects */}
+        <div className="flex gap-3">
+          <Select
             value={typeFilter}
             onChange={(e) =>
               setTypeFilter(e.target.value as "all" | "income" | "expense")
             }
-            style={selectStyle}
-          >
-            <option value="all">Todos</option>
-            <option value="income">Ingresos</option>
-            <option value="expense">Gastos</option>
-          </select>
+            options={[
+              { value: "all", label: "Todos" },
+              { value: "income", label: "Ingresos" },
+              { value: "expense", label: "Gastos" },
+            ]}
+          />
 
-          <select
+          <Select
             value={sortOrder}
             onChange={(e) => setSortOrder(e.target.value as "asc" | "desc")}
-            style={selectStyle}
-          >
-            <option value="desc">Más recientes</option>
-            <option value="asc">Más antiguas</option>
-          </select>
+            options={[
+              { value: "desc", label: "Más recientes" },
+              { value: "asc", label: "Más antiguas" },
+            ]}
+          />
         </div>
       </div>
 
-      {/* ================================ */}
-      {/* ✅ LISTA DE TRANSACCIONES */}
-      {/* ================================ */}
+      {/* ====================== */}
+      {/* ✅ LISTADO */}
+      {/* ====================== */}
       {filteredTransactions.length === 0 ? (
-        <p style={{ color: "#ccc" }}>No hay transacciones que coincidan.</p>
+        <p className="text-white/60 text-sm">No hay transacciones que coincidan.</p>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <div className="flex flex-col gap-4">
           {filteredTransactions.map((tx) => (
             <TransactionItem key={tx.id} tx={tx} />
           ))}
@@ -114,56 +97,57 @@ export default function TransactionsList({ transactions }: { transactions: Tx[] 
   );
 }
 
-/* ✅ Estilos base para selects */
-const selectStyle: React.CSSProperties = {
-  flex: 1,
-  padding: 12,
-  borderRadius: 10,
-  border: "1px solid rgba(255,255,255,0.15)",
-  background: "rgba(255,255,255,0.08)",
-  color: "white",
-  outline: "none",
-  appearance: "none",
-};
+/* ============================
+   ✅ SELECT COMPONENT PRO
+   ============================ */
+function Select({
+  value,
+  onChange,
+  options,
+}: {
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  options: { value: string; label: string }[];
+}) {
+  return (
+    <select
+      value={value}
+      onChange={onChange}
+      className="
+        flex-1 px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white 
+        outline-none appearance-none focus:ring-2 focus:ring-emerald-400/40
+      "
+    >
+      {options.map((op) => (
+        <option key={op.value} value={op.value} className="text-black">
+          {op.label}
+        </option>
+      ))}
+    </select>
+  );
+}
 
-/* ✅ Tarjeta de movimiento estilo BBVA/Revolut */
+/* ============================
+   ✅ ITEM PRO (BBVA / Revolut)
+   ============================ */
 function TransactionItem({ tx }: { tx: Tx }) {
   const isPositive = tx.amount > 0;
 
   return (
     <div
-      style={{
-        padding: "16px 18px",
-        borderRadius: 14,
-        background: "rgba(255,255,255,0.07)",
-        border: "1px solid rgba(255,255,255,0.10)",
-        boxShadow: "0 4px 12px rgba(0,0,0,0.25)",
-        backdropFilter: "blur(8px)",
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        transition: "transform 0.15s ease, background 0.15s ease",
-      }}
+      className="
+        p-4 rounded-xl bg-white/10 border border-white/10 backdrop-blur-md
+        shadow-lg flex justify-between items-center
+        transition-all hover:bg-white/20 hover:scale-[1.01]
+      "
     >
+      {/* Texto */}
       <div>
-        <div
-          style={{
-            fontWeight: 600,
-            fontSize: 16,
-            color: "white",
-            marginBottom: 4,
-          }}
-        >
+        <div className="text-base font-semibold text-white">
           {tx.description || "Movimiento sin descripción"}
         </div>
 
-        <div
-          style={{
-            fontSize: 13,
-            opacity: 0.6,
-            color: "#ddd",
-          }}
-        >
+        <div className="text-xs text-white/60 mt-1">
           {new Date(tx.transaction_date).toLocaleDateString("es-ES", {
             day: "2-digit",
             month: "short",
@@ -171,12 +155,12 @@ function TransactionItem({ tx }: { tx: Tx }) {
         </div>
       </div>
 
+      {/* Importe */}
       <div
-        style={{
-          fontWeight: 700,
-          fontSize: 18,
-          color: isPositive ? "#00d97e" : "#ff5b5b",
-        }}
+        className={`
+          text-lg font-semibold
+          ${isPositive ? "text-emerald-400" : "text-red-400"}
+        `}
       >
         {isPositive ? `+${tx.amount.toFixed(2)}€` : `${tx.amount.toFixed(2)}€`}
       </div>

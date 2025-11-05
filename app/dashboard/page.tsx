@@ -17,15 +17,7 @@ export default async function DashboardPage() {
 
   if (!user || userError) {
     return (
-      <main
-        style={{
-          minHeight: "100vh",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          color: "white",
-        }}
-      >
+      <main className="min-h-screen flex justify-center items-center text-white">
         <p>No has iniciado sesión...</p>
       </main>
     );
@@ -60,83 +52,57 @@ export default async function DashboardPage() {
 
   return (
     <main
-      style={{
-        minHeight: "100vh",
-        padding: "32px 20px 80px",
-        background: "linear-gradient(135deg, #0A1A2F 0%, #103656 60%, #0A1A2F)",
-        color: "white",
-        fontFamily: "system-ui, sans-serif",
-      }}
+      className="
+        min-h-screen text-white px-5 pt-6 pb-32 
+        bg-gradient-to-br from-[#0A1A2F] via-[#103656] to-[#0A1A2F]
+      "
     >
-      {/* HEADER */}
-      <header style={{ marginBottom: 32 }}>
-        <h1
-          style={{
-            fontSize: 28,
-            fontWeight: 700,
-            marginBottom: 6,
-          }}
-        >
+      {/* ✅ HEADER */}
+      <header className="mb-10">
+        <h1 className="text-3xl font-semibold tracking-tight text-[#00E0A1] font-[SF_Pro_Display]">
           Hola, {user.email?.split("@")[0]}
         </h1>
-        <p style={{ opacity: 0.7 }}>Tu panel financiero inteligente</p>
+        <p className="text-white/60 mt-1">Tu panel financiero inteligente</p>
       </header>
 
-      {/* SALDO GLOBAL */}
+      {/* ✅ SALDO GLOBAL */}
       <section
-        style={{
-          padding: 24,
-          borderRadius: 20,
-          background: "rgba(255,255,255,0.07)",
-          border: "1px solid rgba(255,255,255,0.12)",
-          backdropFilter: "blur(10px)",
-          marginBottom: 28,
-        }}
+        className="
+        bg-white/10 border border-white/20 rounded-2xl 
+        backdrop-blur-xl p-6 shadow-xl mb-10
+      "
       >
-        <p style={{ opacity: 0.7, fontSize: 14 }}>Saldo total consolidado</p>
-        <h2
-          style={{
-            fontSize: 38,
-            fontWeight: 700,
-            marginTop: 4,
-          }}
-        >
+        <p className="text-white/70 text-sm">Saldo total consolidado</p>
+
+        <h2 className="text-4xl font-semibold mt-1">
           {new Intl.NumberFormat("es-ES", {
             style: "currency",
             currency: "EUR",
           }).format(consolidatedBalance)}
         </h2>
 
-        <div style={{ marginTop: 16 }}>
+        <div className="mt-4">
           <ImportDummyButton />
         </div>
       </section>
 
-      {/* TARJETAS DE CUENTAS (ESTILO BBVA / REVOLUT) */}
-      <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 20, marginBottom: 14 }}>Tus cuentas bancarias</h2>
+      {/* ✅ TARJETAS DE CUENTAS */}
+      <section className="mb-12">
+        <h2 className="text-xl mb-4 font-medium">Tus cuentas bancarias</h2>
 
-        <div style={{ display: "grid", gap: 16 }}>
-          {accountsWithComputedBalance.map((acc, i) => (
+        <div className="grid gap-5">
+          {accountsWithComputedBalance.map((acc) => (
             <div
               key={acc.id}
-              style={{
-                padding: 20,
-                borderRadius: 18,
-                background:
-                  "linear-gradient(135deg, #1D4F91 0%, #1B3F73 100%)",
-                border: "1px solid rgba(255,255,255,0.15)",
-                boxShadow: "0 4px 14px rgba(0,0,0,0.3)",
-              }}
+              className="
+                p-5 rounded-2xl border border-white/20 shadow-xl
+                bg-gradient-to-br from-blue-700 to-blue-900
+                text-white
+              "
             >
-              <p style={{ fontSize: 14, opacity: 0.8 }}>{acc.bank_name}</p>
-              <h3
-                style={{
-                  marginTop: 6,
-                  fontSize: 26,
-                  fontWeight: 600,
-                }}
-              >
+              <p className="text-white/70 text-sm">{acc.bank_name}</p>
+
+              <h3 className="text-3xl font-semibold mt-1">
                 {new Intl.NumberFormat("es-ES", {
                   style: "currency",
                   currency: "EUR",
@@ -147,8 +113,8 @@ export default async function DashboardPage() {
         </div>
       </section>
 
-      {/* CASH FLOW SUMMARY */}
-      <section style={{ marginBottom: 40 }}>
+      {/* ✅ CASH FLOW SUMMARY */}
+      <section className="mb-12">
         <CashFlowSummary
           transactions={transactions ?? []}
           bankAccounts={accountsWithComputedBalance}
@@ -156,17 +122,17 @@ export default async function DashboardPage() {
         />
       </section>
 
-      {/* ANALYTICS */}
-      <section style={{ marginBottom: 40 }}>
+      {/* ✅ ANALYTICS PRO */}
+      <section className="mb-12">
         <AnalyticsPro
           transactions={transactions ?? []}
           accounts={accountsWithComputedBalance}
         />
       </section>
 
-      {/* TRANSACCIONES */}
+      {/* ✅ LISTA DE TRANSACCIONES */}
       <section>
-        <h2 style={{ fontSize: 20, marginBottom: 14 }}>Últimos movimientos</h2>
+        <h2 className="text-xl mb-4 font-medium">Últimos movimientos</h2>
         <TransactionsList transactions={transactions ?? []} />
       </section>
     </main>

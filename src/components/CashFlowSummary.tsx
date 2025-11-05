@@ -25,7 +25,6 @@ function formatCurrency(value: number) {
 
 export default function CashFlowSummary({
   transactions,
-  bankAccounts,
   consolidatedBalance,
 }: Props) {
   const now = new Date();
@@ -41,9 +40,9 @@ export default function CashFlowSummary({
       const d = new Date(tx.transaction_date);
       if (isNaN(d.getTime())) return;
 
-      const inside30 = d >= last30 && d <= now;
+      const inside = d >= last30 && d <= now;
 
-      if (inside30) {
+      if (inside) {
         if (tx.amount > 0) income += tx.amount;
         else expenses += Math.abs(tx.amount);
 
@@ -56,11 +55,12 @@ export default function CashFlowSummary({
 
     const net = income - expenses;
 
-    let insightMsg = "";
-    if (net > 0) insightMsg = "Buen mes: generaste ahorro neto.";
-    else if (expenses > income * 1.2)
-      insightMsg = "Atención: tus gastos superan tus ingresos.";
-    else insightMsg = "Flujo negativo, pero dentro de lo normal.";
+    const insightMsg =
+      net > 0
+        ? "Buen mes: generaste ahorro neto."
+        : expenses > income * 1.2
+        ? "Atención: tus gastos superan tus ingresos."
+        : "Flujo negativo, pero dentro de lo normal.";
 
     return {
       income30: income,
@@ -74,27 +74,11 @@ export default function CashFlowSummary({
   const maxAbs = Math.max(...monthlyChart.map((c) => Math.abs(c.amount)), 1);
 
   return (
-    <section
-      style={{
-        padding: 20,
-        borderRadius: 16,
-        background: "rgba(255,255,255,0.06)",
-        border: "1px solid rgba(255,255,255,0.15)",
-        backdropFilter: "blur(10px)",
-        marginBottom: 24,
-        color: "white",
-      }}
-    >
-      <h2 style={{ fontSize: 22, marginBottom: 16 }}>🔎 Resumen financiero</h2>
+    <section className="p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xl text-white mb-8">
+      <h2 className="text-2xl font-semibold mb-6">Resumen financiero</h2>
 
-      {/* GRID DE TARJETAS */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: 16,
-        }}
-      >
+      {/* === GRID DE TARJETAS === */}
+      <div className="grid grid-cols-2 gap-4">
         <Card title="Saldo consolidado" value={formatCurrency(consolidatedBalance)} />
         <Card title="Flujo neto (30 días)" value={formatCurrency(net30)} />
 
@@ -102,65 +86,48 @@ export default function CashFlowSummary({
         <Card title="Gastos (30 días)" value={formatCurrency(expenses30)} color="#ff5b5b" />
       </div>
 
-      {/* INSIGHT */}
-      <div
-        style={{
-          marginTop: 20,
-          padding: 16,
-          borderRadius: 12,
-          background: "rgba(255,255,255,0.08)",
-          border: "1px solid rgba(255,255,255,0.12)",
-          fontSize: 15,
-        }}
-      >
+      {/* === INSIGHT === */}
+      <div className="mt-6 p-4 rounded-xl bg-white/10 border border-white/10 text-sm leading-relaxed">
         💡 {insight}
       </div>
 
-      {/* MINI SPARKLINE */}
-      <div
-        style={{
-          marginTop: 20,
-          padding: 16,
-          borderRadius: 12,
-          background: "rgba(255,255,255,0.08)",
-          border: "1px solid rgba(255,255,255,0.12)",
-        }}
-      >
-        <div style={{ opacity: 0.7, marginBottom: 10 }}>Actividad últimos 30 días</div>
+      {/* === MINI SPARKLINE === */}
+      <div className="mt-6 p-4 rounded-xl bg-white/10 border border-white/10">
+        <div className="opacity-60 mb-3">Actividad últimos 30 días</div>
 
-        <div
-          style={{
-            display: "flex",
-            alignItems: "flex-end",
-            gap: 6,
-            height: 100,
-          }}
-        >
-          {monthlyChart.map((entry, i) => {
-            const height = (Math.abs(entry.amount) / maxAbs) * 100;
-            const color = entry.amount > 0 ? "#00d97e" : "#ff5b5b";
+        {monthlyChart.length === 0 ? (
+          <div className="h-24 flex items-center justify-center text-xs opacity-60">
+            No hay datos suficientes para mostrar actividad.
+          </div>
+        ) : (
+          <div className="flex items-end gap-[6px] h-28">
+            {monthlyChart.map((entry, i) => {
+              const height = Math.max((Math.abs(entry.amount) / maxAbs) * 100, 10);
+              const color = entry.amount > 0 ? "#00d97e" : "#ff5b5b";
 
-            return (
-              <div
-                key={i}
-                style={{
-                  width: 8,
-                  height,
-                  background: color,
-                  borderRadius: 6,
-                  boxShadow: "0 3px 8px rgba(0,0,0,0.25)",
-                  transition: "height 0.3s ease",
-                }}
-                title={`${entry.date}: ${entry.amount}€`}
-              ></div>
-            );
-          })}
-        </div>
+              return (
+                <div key={i} className="flex flex-col items-center gap-1">
+                  <div
+                    className="w-[10px] rounded-md shadow-md transition-all duration-300"
+                    style={{
+                      height: `${height}%`,
+                      background: color,
+                    }}
+                  />
+                  <span className="text-[10px] opacity-60">{entry.date}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </section>
   );
 }
 
+/* ======================================================
+   ✅ TARJETA PRO (Glass + sombras + tipografía SF Pro)
+   ====================================================== */
 function Card({
   title,
   value,
@@ -171,23 +138,11 @@ function Card({
   color?: string;
 }) {
   return (
-    <div
-      style={{
-        padding: 16,
-        borderRadius: 14,
-        background: "rgba(255,255,255,0.08)",
-        border: "1px solid rgba(255,255,255,0.14)",
-        backdropFilter: "blur(8px)",
-      }}
-    >
-      <div style={{ fontSize: 13, opacity: 0.7 }}>{title}</div>
+    <div className="p-4 rounded-xl bg-white/10 border border-white/10 backdrop-blur-md">
+      <div className="text-xs opacity-70">{title}</div>
       <div
-        style={{
-          marginTop: 4,
-          fontSize: 24,
-          fontWeight: 600,
-          color,
-        }}
+        className="mt-1 text-xl font-semibold"
+        style={{ color }}
       >
         {value}
       </div>
