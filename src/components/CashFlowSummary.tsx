@@ -2,6 +2,7 @@
 
 import React, { useMemo } from "react";
 import type { BankAccount } from "../types/models";
+import CashFlowSparkline from "./charts/CashFlowSparkline";
 
 type Tx = {
   amount: number;
@@ -79,11 +80,22 @@ export default function CashFlowSummary({
 
       {/* === GRID DE TARJETAS === */}
       <div className="grid grid-cols-2 gap-4">
-        <Card title="Saldo consolidado" value={formatCurrency(consolidatedBalance)} />
+        <Card
+          title="Saldo consolidado"
+          value={formatCurrency(consolidatedBalance)}
+        />
         <Card title="Flujo neto (30 días)" value={formatCurrency(net30)} />
 
-        <Card title="Ingresos (30 días)" value={formatCurrency(income30)} color="#00d97e" />
-        <Card title="Gastos (30 días)" value={formatCurrency(expenses30)} color="#ff5b5b" />
+        <Card
+          title="Ingresos (30 días)"
+          value={formatCurrency(income30)}
+          color="#00d97e"
+        />
+        <Card
+          title="Gastos (30 días)"
+          value={formatCurrency(expenses30)}
+          color="#ff5b5b"
+        />
       </div>
 
       {/* === INSIGHT === */}
@@ -93,33 +105,8 @@ export default function CashFlowSummary({
 
       {/* === MINI SPARKLINE === */}
       <div className="mt-6 p-4 rounded-xl bg-white/10 border border-white/10">
-        <div className="opacity-60 mb-3">Actividad últimos 30 días</div>
-
-        {monthlyChart.length === 0 ? (
-          <div className="h-24 flex items-center justify-center text-xs opacity-60">
-            No hay datos suficientes para mostrar actividad.
-          </div>
-        ) : (
-          <div className="flex items-end gap-[6px] h-28">
-            {monthlyChart.map((entry, i) => {
-              const height = Math.max((Math.abs(entry.amount) / maxAbs) * 100, 10);
-              const color = entry.amount > 0 ? "#00d97e" : "#ff5b5b";
-
-              return (
-                <div key={i} className="flex flex-col items-center gap-1">
-                  <div
-                    className="w-[10px] rounded-md shadow-md transition-all duration-300"
-                    style={{
-                      height: `${height}%`,
-                      background: color,
-                    }}
-                  />
-                  <span className="text-[10px] opacity-60">{entry.date}</span>
-                </div>
-              );
-            })}
-          </div>
-        )}
+        <div className="opacity-70 mb-2">Actividad últimos 30 días</div>
+        <CashFlowSparkline chart={monthlyChart} />
       </div>
     </section>
   );
@@ -140,10 +127,7 @@ function Card({
   return (
     <div className="p-4 rounded-xl bg-white/10 border border-white/10 backdrop-blur-md">
       <div className="text-xs opacity-70">{title}</div>
-      <div
-        className="mt-1 text-xl font-semibold"
-        style={{ color }}
-      >
+      <div className="mt-1 text-xl font-semibold" style={{ color }}>
         {value}
       </div>
     </div>

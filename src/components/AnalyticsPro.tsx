@@ -1,6 +1,9 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
+import MonthlyEvolutionChart from "./charts/MonthlyEvolutionChart";
+import CategoryDonutChart from "./charts/CategoryDonutChart";
+
 
 type Tx = {
   id: string;
@@ -146,35 +149,11 @@ export default function AnalyticsPro({
         </select>
       </div>
 
-      {/* ✅ GRÁFICO EVOLUTIVO */}
-      <div className="p-5 rounded-xl bg-white/10 border border-white/10 mb-8">
-        <h3 className="font-medium mb-4">Evolución mensual</h3>
-
-        {monthly.length === 0 ? (
-          <div className="h-32 flex items-center justify-center opacity-60 text-sm">
-            No hay datos suficientes para mostrar la gráfica.
-          </div>
-        ) : (
-          <div className="flex items-end gap-4 h-40 transition-all">
-            {monthly.map(([month, value], i) => {
-              const h = Math.max((Math.abs(value) / maxValue) * 100, 12); // ✅ MIN HEIGHT
-
-              return (
-                <div key={i} className="text-center">
-                  <div
-                    className="w-[18px] mx-auto rounded-md shadow-lg transition-all duration-300"
-                    style={{
-                      height: `${h}%`,
-                      backgroundColor: value >= 0 ? "#2ED573" : "#FF6B6B",
-                    }}
-                  />
-                  <div className="text-xs opacity-60 mt-2">{month.slice(5)}</div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+     {/* ✅ GRÁFICO EVOLUTIVO */}
+     <div className="p-5 rounded-xl bg-white/10 border border-white/10 mb-8">
+  <h3 className="font-medium mb-4">Evolución mensual</h3>
+  <MonthlyEvolutionChart monthly={monthly} />
+</div>
 
       {/* ✅ PIE CHART */}
       <div className="p-5 rounded-xl bg-white/10 border border-white/10 mb-8">
@@ -187,24 +166,8 @@ export default function AnalyticsPro({
         ) : (
           <div className="flex gap-6">
             {/* ✅ Donut preciso */}
-            <div
-              className="w-[150px] h-[150px] rounded-full shadow-lg"
-              style={{
-                background: (() => {
-                  const total = categories.reduce((a, b) => a + b[1], 0);
-                  let acc = 0;
+            <CategoryDonutChart categories={categories} palette={palette} />
 
-                  return `conic-gradient(${categories
-                    .map(([cat, value], i) => {
-                      const start = (acc / total) * 360;
-                      acc += value;
-                      const end = (acc / total) * 360;
-                      return `${palette[i % palette.length]} ${start}deg ${end}deg`;
-                    })
-                    .join(",")})`;
-                })(),
-              }}
-            />
 
             {/* ✅ Leyenda */}
             <div className="flex flex-col justify-center gap-2">
