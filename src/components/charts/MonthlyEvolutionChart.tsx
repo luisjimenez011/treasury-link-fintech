@@ -27,22 +27,24 @@ export default function MonthlyEvolutionChart({
     );
   }
 
-  // ✅ Labels y valores reales
-  const labels = monthly.map(([month]) => month.slice(5));
+  // ✅ Labels (más descriptivos)
+  const labels = monthly.map(([month]) => {
+    const date = new Date(month);
+    const formatter = new Intl.DateTimeFormat("es-ES", { month: "short", year: "2-digit" });
+    return formatter.format(date); // Ej: "nov. 25"
+  });
+
   const realValues = monthly.map(([_, v]) => v);
 
-  // ✅ AMPLIFICACIÓN VISUAL (Opción B)
+  // ✅ Amplificación visual
   const min = Math.min(...realValues);
   const max = Math.max(...realValues);
 
-  // Evita división entre 0 si todos los valores son iguales
   const amplifiedValues =
     max - min === 0
-      ? realValues.map(() => 50) // todos iguales → barra centrada
+      ? realValues.map(() => 50)
       : realValues.map((v) => {
-          // Normalización 0-1
           const normalized = (v - min) / (max - min);
-          // Amplificación visual (ajusta 0.65 para más curva)
           return normalized * 100 * 0.65 + 20;
         });
 
@@ -50,7 +52,7 @@ export default function MonthlyEvolutionChart({
     labels,
     datasets: [
       {
-        label: "",
+        label: "Evolución mensual",
         data: amplifiedValues,
         fill: true,
         borderColor: "#00E0A1",
@@ -81,6 +83,10 @@ export default function MonthlyEvolutionChart({
         padding: 12,
         borderColor: "#00E0A1",
         borderWidth: 1,
+        callbacks: {
+          title: (ctx: any) => `Mes: ${ctx[0].label}`,
+          label: (ctx: any) => `Valor real: ${realValues[ctx.dataIndex]} €`,
+        },
       },
     },
     scales: {

@@ -53,7 +53,6 @@ export async function POST(req: NextRequest) {
         id: newId,
         user_id: user.id,
         bank_name: "Cuenta Importada",
-        current_balance: 0,
       };
     });
 

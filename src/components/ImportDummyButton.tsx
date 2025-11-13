@@ -18,6 +18,12 @@ export default function ImportDummyButton() {
 
       const data = await res.json();
       setResult(data);
+
+      // ✅ Refrescar dashboard automáticamente tras importar
+      setTimeout(() => {
+        window.location.reload();
+      }, 600);
+
     } catch (err: any) {
       setResult({ error: err.message });
     }

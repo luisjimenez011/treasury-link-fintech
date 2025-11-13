@@ -4,7 +4,6 @@ import React, { useMemo, useState } from "react";
 import MonthlyEvolutionChart from "./charts/MonthlyEvolutionChart";
 import CategoryDonutChart from "./charts/CategoryDonutChart";
 
-
 type Tx = {
   id: string;
   amount: number;
@@ -38,7 +37,8 @@ export default function AnalyticsPro({
 
     return transactions.filter((t) => {
       const d = new Date(t.transaction_date);
-      const matchAcc = selectedAccount === "all" || t.account_id === selectedAccount;
+      const matchAcc =
+        selectedAccount === "all" || t.account_id === selectedAccount;
       return matchAcc && d >= limit;
     });
   }, [transactions, selectedAccount, monthsRange]);
@@ -51,7 +51,10 @@ export default function AnalyticsPro({
 
     filteredTx.forEach((t) => {
       const d = new Date(t.transaction_date);
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
+        2,
+        "0"
+      )}`;
       map.set(key, (map.get(key) ?? 0) + t.amount);
     });
 
@@ -70,11 +73,75 @@ export default function AnalyticsPro({
       if (!d) return "Otros";
       const s = d.toLowerCase();
 
-      if (s.includes("super") || s.includes("comida")) return "Supermercado";
-      if (s.includes("gas") || s.includes("uber")) return "Transporte";
-      if (s.includes("suscrip") || s.includes("internet")) return "Servicios";
-      if (s.includes("rest") || s.includes("cafe")) return "Restauración";
+      // 🛒 Supermercado / comida
+      if (
+        s.includes("super") ||
+        s.includes("comida") ||
+        s.includes("mercado") ||
+        s.includes("verduler")
+      )
+        return "Supermercado";
 
+      // 🍽️ Restauración
+      if (
+        s.includes("rest") ||
+        s.includes("cafe") ||
+        s.includes("café") ||
+        s.includes("panadería") ||
+        s.includes("comida rápida")
+      )
+        return "Restauración";
+
+      // 🚗 Transporte
+      if (
+        s.includes("gas") ||
+        s.includes("uber") ||
+        s.includes("taxi") ||
+        s.includes("transporte") ||
+        s.includes("parking") ||
+        s.includes("estacionamiento")
+      )
+        return "Transporte";
+
+      // 📱 Servicios / suscripciones
+      if (
+        s.includes("suscrip") ||
+        s.includes("internet") ||
+        s.includes("app") ||
+        s.includes("stream") ||
+        s.includes("música")
+      )
+        return "Servicios digitales";
+
+      // 🏠 Hogar (luz, agua, internet, alquiler)
+      if (
+        s.includes("luz") ||
+        s.includes("agua") ||
+        s.includes("renta") ||
+        s.includes("vivienda") ||
+        s.includes("servicios")
+      )
+        return "Hogar";
+
+      // 🧴 Salud / farmacia
+      if (s.includes("farmac") || s.includes("consult") || s.includes("salud"))
+        return "Salud";
+
+      // 🎽 Moda / ropa
+      if (s.includes("ropa") || s.includes("moda")) return "Moda";
+
+      // 📚 Educación
+      if (s.includes("librería") || s.includes("libro") || s.includes("curso"))
+        return "Educación";
+
+      // 💸 Finanzas / transferencias
+      if (s.includes("reembolso") || s.includes("transfer")) return "Finanzas";
+
+      // 🎉 Ocio
+      if (s.includes("cine") || s.includes("evento") || s.includes("bar"))
+        return "Ocio";
+
+      // ❓ Default
       return "Otros";
     };
 
@@ -149,11 +216,11 @@ export default function AnalyticsPro({
         </select>
       </div>
 
-     {/* ✅ GRÁFICO EVOLUTIVO */}
-     <div className="p-5 rounded-xl bg-white/10 border border-white/10 mb-8">
-  <h3 className="font-medium mb-4">Evolución mensual</h3>
-  <MonthlyEvolutionChart monthly={monthly} />
-</div>
+      {/* ✅ GRÁFICO EVOLUTIVO */}
+      <div className="p-5 rounded-xl bg-white/10 border border-white/10 mb-8">
+        <h3 className="font-medium mb-4">Evolución mensual</h3>
+        <MonthlyEvolutionChart monthly={monthly} />
+      </div>
 
       {/* ✅ PIE CHART */}
       <div className="p-5 rounded-xl bg-white/10 border border-white/10 mb-8">
@@ -167,7 +234,6 @@ export default function AnalyticsPro({
           <div className="flex gap-6">
             {/* ✅ Donut preciso */}
             <CategoryDonutChart categories={categories} palette={palette} />
-
 
             {/* ✅ Leyenda */}
             <div className="flex flex-col justify-center gap-2">
